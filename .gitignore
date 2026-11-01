@@ -1,0 +1,52 @@
+# Autotools generated files
+Makefile
+Makefile.in
+/aclocal.m4
+/autom4te.cache/
+/build-aux/
+/config.log
+/config.status
+/configure
+/libtool
+# Libtool's generated m4, but not hand-written macros in m4/
+/m4/libtool.m4
+/m4/lt*.m4
+.deps/
+.libs/
+.dirstamp
+*.o
+*.lo
+*.la
+*.a
+
+# Files configure and make write from their .in templates
+/clll.pc
+/cmake/clllConfig.cmake
+/cmake/clllConfigVersion.cmake
+
+# Out-of-tree build directories
+/build*/
+
+# Doxygen output
+/doc/
+
+# Test programs and output
+/tests/test_example
+/tests/test_gram_schmidt
+/tests/test_lll_reduced
+/tests/test_lll_short_vector
+*.log
+*.trs
+
+# Distribution tarballs
+*.tar.gz
+*.tar.xz
+
+# Backups left by autoconf, autoheader and editors
+*~
+
+# Personal IDE settings
+/.idea/
+/compile_commands.json
+
+/CLLL/

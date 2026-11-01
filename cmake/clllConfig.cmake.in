@@ -1,0 +1,28 @@
+# CMake package configuration for clll. make generates it from this file.
+#
+#   find_package(clll 1.0 REQUIRED)
+#   target_link_libraries(app PRIVATE clll::clll)
+
+if(NOT TARGET clll::clll)
+    find_library(CLLL_LIBRARY NAMES clll PATHS "@libdir@" NO_DEFAULT_PATH)
+    find_path(CLLL_GMP_INCLUDE_DIR NAMES gmp.h)
+    find_library(CLLL_GMP_LIBRARY NAMES gmp)
+    mark_as_advanced(CLLL_LIBRARY CLLL_GMP_INCLUDE_DIR CLLL_GMP_LIBRARY)
+
+    if(NOT CLLL_LIBRARY)
+        set(clll_FOUND FALSE)
+        set(clll_NOT_FOUND_MESSAGE "libclll was not found in @libdir@")
+        return()
+    endif()
+    if(NOT CLLL_GMP_INCLUDE_DIR OR NOT CLLL_GMP_LIBRARY)
+        set(clll_FOUND FALSE)
+        set(clll_NOT_FOUND_MESSAGE "clll needs GMP (gmp.h and libgmp), which was not found")
+        return()
+    endif()
+
+    add_library(clll::clll UNKNOWN IMPORTED)
+    set_target_properties(clll::clll PROPERTIES
+        IMPORTED_LOCATION "${CLLL_LIBRARY}"
+        INTERFACE_INCLUDE_DIRECTORIES "@includedir@;${CLLL_GMP_INCLUDE_DIR}"
+        INTERFACE_LINK_LIBRARIES "${CLLL_GMP_LIBRARY}")
+endif()

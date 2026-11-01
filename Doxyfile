@@ -1,0 +1,24 @@
+# Doxygen configuration for clll.
+# Run doxygen in this directory.
+# The HTML goes to doc/html/.
+
+PROJECT_NAME           = clll
+PROJECT_BRIEF          = "Exact integer LLL lattice basis reduction"
+OUTPUT_DIRECTORY       = doc
+
+INPUT                  = README.md include src
+FILE_PATTERNS          = *.h
+RECURSIVE              = YES
+USE_MDFILE_AS_MAINPAGE = README.md
+STRIP_FROM_PATH        = .
+STRIP_FROM_INC_PATH    = include
+
+OPTIMIZE_OUTPUT_FOR_C  = YES
+EXTRACT_STATIC         = YES
+
+USE_MATHJAX            = YES
+MATHJAX_VERSION        = MathJax_3
+GENERATE_LATEX         = NO
+
+QUIET                  = YES
+WARN_NO_PARAMDOC       = YES
