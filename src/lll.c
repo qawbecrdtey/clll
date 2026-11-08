@@ -13,35 +13,48 @@
 
 static void submul_entries(mpz_t *const rop, mpz_t const c, mpz_t *const v, unsigned long const len) {
     mp_limb_t const c0 = mpz_getlimbn(c, 0);
-    if (mpz_size(c) == 1 && c0 <= ULONG_MAX) {
-        unsigned long const u = (unsigned long)c0;
-        if (mpz_sgn(c) > 0) {
-            for (unsigned long l = 0; l < len; l++) {
-                mpz_submul_ui(rop[l], v[l], u);
-            }
+    if (mpz_size(c) != 1 || c0 > ULONG_MAX) {
+        for (unsigned long l = 0; l < len; l++) {
+            mpz_submul(rop[l], c, v[l]);
         }
-        else {
-            for (unsigned long l = 0; l < len; l++) {
-                mpz_addmul_ui(rop[l], v[l], u);
-            }
+        return;
+    }
+    unsigned long const u = (unsigned long) c0;
+    if (mpz_sgn(c) > 0) {
+        for (unsigned long l = 0; l < len; l++) {
+            mpz_submul_ui(rop[l], v[l], u);
         }
     }
     else {
         for (unsigned long l = 0; l < len; l++) {
-            mpz_submul(rop[l], c, v[l]);
+            mpz_addmul_ui(rop[l], v[l], u);
         }
     }
 }
 
-void clll_lll(clll_vector *const basis, unsigned long const m, mpq_t const alpha_in) {
-    mpq_t alpha;
-    mpq_init(alpha);
-    mpq_set(alpha, alpha_in);
-    mpq_canonicalize(alpha);
+#ifndef NDEBUG
+// Returns whether a and b share no factor, i.e. gcd(a, b) == 1. It needs a
+// temporary and calls mpz_gcd, so it is not free of side effects and is only
+// used in assertions that are compiled out under NDEBUG.
+static bool coprime(mpz_srcptr const a, mpz_srcptr const b) {
+    mpz_t g;
+    mpz_init(g);
+    mpz_gcd(g, a, b);
+    bool const r = mpz_cmp_ui(g, 1) == 0;
+    mpz_clear(g);
+    return r;
+}
+#endif
+
+void clll_lll(clll_vector *const basis, unsigned long const m, mpq_t const alpha) {
+    // alpha must be canonical, which mpq_cmp_ui below also relies on.
+    ASSERT_AND_ASSUME(mpz_sgn(mpq_denref(alpha)) > 0);
+#ifndef NDEBUG
+    ASSERT_AND_ASSUME(coprime(mpq_numref(alpha), mpq_denref(alpha)));
+#endif
     ASSERT_AND_ASSUME(mpq_cmp_ui(alpha, 4, 3) >= 0);
 
     if (m == 0) {
-        mpq_clear(alpha);
         return;
     }
 
@@ -89,7 +102,7 @@ void clll_lll(clll_vector *const basis, unsigned long const m, mpq_t const alpha
     while (i < m) {
         if (i == rows) {
             clll_gram_schmidt_orthogonalization_row(mu, basis, i, a, b);
-            rows += 1;
+            rows++;
         }
 
         if (upw) {
@@ -132,39 +145,39 @@ void clll_lll(clll_vector *const basis, unsigned long const m, mpq_t const alpha
             violated = mpz_cmp(sq[i], rhs) > 0;
         }
 
-        if (violated) {
-            // Line 6: swap.
-            for (unsigned long j = 0; j + 1 < i; j++) {
-                mpz_swap(mu[mu_index(i - 1, j)], mu[mu_index(i, j)]);
-            }
-            for (unsigned long k = i + 1; k < rows; k++) {
-                mpz_mul(a, mu[mu_index(i, i - 1)], mu[mu_index(k, i - 1)]);
-                mpz_addmul(a, mu[mu_index(k, i)], mu[d_index(i - 1)]);
-                mpz_mul(b, mu[d_index(i + 1)], mu[mu_index(k, i - 1)]);
-                mpz_submul(b, mu[mu_index(i, i - 1)], mu[mu_index(k, i)]);
-                ASSERT_AND_ASSUME(mpz_divisible_p(a, mu[d_index(i)]));
-                mpz_divexact(mu[mu_index(k, i - 1)], a, mu[d_index(i)]);
-                ASSERT_AND_ASSUME(mpz_divisible_p(b, mu[d_index(i)]));
-                mpz_divexact(mu[mu_index(k, i)], b, mu[d_index(i)]);
-            }
-            mpz_mul(a, mu[mu_index(i, i - 1)], mu[mu_index(i, i - 1)]);
-            mpz_add(a, a, pr[i]);
-            ASSERT_AND_ASSUME(mpz_divisible_p(a, mu[d_index(i)]));
-            mpz_divexact(mu[d_index(i)], a, mu[d_index(i)]);
-            sq_ok[i] = false;
-            pr_ok[i - 1] = false;
-            pr_ok[i + 1] = false;
-            half_ok[i] = false;
-
-            clll_vector_swap(&basis[i - 1], &basis[i]);
-            i -= 1;
-            upw = false;
-        }
-        else {
+        if (!violated) {
             // Line 7
-            i += 1;
+            i++;
             upw = true;
+            continue;
         }
+
+        // Line 6: swap.
+        for (unsigned long j = 0; j + 1 < i; j++) {
+            mpz_swap(mu[mu_index(i - 1, j)], mu[mu_index(i, j)]);
+        }
+        for (unsigned long k = i + 1; k < rows; k++) {
+            mpz_mul(a, mu[mu_index(i, i - 1)], mu[mu_index(k, i - 1)]);
+            mpz_addmul(a, mu[mu_index(k, i)], mu[d_index(i - 1)]);
+            mpz_mul(b, mu[d_index(i + 1)], mu[mu_index(k, i - 1)]);
+            mpz_submul(b, mu[mu_index(i, i - 1)], mu[mu_index(k, i)]);
+            ASSERT_AND_ASSUME(mpz_divisible_p(a, mu[d_index(i)]));
+            mpz_divexact(mu[mu_index(k, i - 1)], a, mu[d_index(i)]);
+            ASSERT_AND_ASSUME(mpz_divisible_p(b, mu[d_index(i)]));
+            mpz_divexact(mu[mu_index(k, i)], b, mu[d_index(i)]);
+        }
+        mpz_mul(a, mu[mu_index(i, i - 1)], mu[mu_index(i, i - 1)]);
+        mpz_add(a, a, pr[i]);
+        ASSERT_AND_ASSUME(mpz_divisible_p(a, mu[d_index(i)]));
+        mpz_divexact(mu[d_index(i)], a, mu[d_index(i)]);
+        sq_ok[i] = false;
+        pr_ok[i - 1] = false;
+        pr_ok[i + 1] = false;
+        half_ok[i] = false;
+
+        clll_vector_swap(&basis[i - 1], &basis[i]);
+        i--;
+        upw = false;
     }
 
     // Line 8
@@ -186,5 +199,4 @@ void clll_lll(clll_vector *const basis, unsigned long const m, mpq_t const alpha
         mpz_clear(mu[k]);
     }
     deallocate(mu, entries * sizeof(mpz_t));
-    mpq_clear(alpha);
 }

@@ -120,6 +120,9 @@ Vectors follow GMP's conventions:
 initialize each one with `clll_vector_init` before use, clear it with
 `clll_vector_clear` afterwards, and read or write entries directly as
 `basis[i].v[j]`.
+Like every GMP rational, `alpha` must be in canonical form.
+`mpq_set_ui(alpha, 3, 2)` already is, but a fraction with common factors,
+such as 6/4, needs `mpq_canonicalize` before the call.
 C++ code can include `<clll.h>` directly.
 
 ### Documentation

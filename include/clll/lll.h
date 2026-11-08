@@ -44,6 +44,11 @@ extern "C" {
  *      same length n, so @f$m \le n@f$.
  * @pre @f$\alpha \ge 4/3@f$. The running time is polynomial only for
  *      @f$\alpha > 4/3@f$.
+ * @pre @f$\alpha@f$ is in canonical form, as GMP requires of every mpq_t
+ *      operand: its denominator is positive and shares no factor with its
+ *      numerator. Results of GMP's rational arithmetic are canonical. After
+ *      mpq_set_ui() or mpq_set_si(), call mpq_canonicalize() unless the two
+ *      arguments are already coprime.
  *
  * @warning The preconditions are not checked. If they do not hold, the
  *          behavior is undefined: the call may crash, never return, or corrupt

@@ -1,5 +1,5 @@
 AC_PREREQ([2.71])
-AC_INIT([clll], [1.0.0], [qawbecrdtey@kaist.ac.kr], [clll])
+AC_INIT([clll], [1.0.1], [qawbecrdtey@kaist.ac.kr], [clll])
 AC_CONFIG_SRCDIR([src/lll.c])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
